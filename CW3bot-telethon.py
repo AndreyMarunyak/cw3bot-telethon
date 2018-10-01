@@ -13,7 +13,14 @@ api_id = 409382
 game_id = 265204902
 
 client = TelegramClient('CW3bot', api_id, api_hash)
-client.start()
+
+
+def print_what_you_send(func):
+	def wrap():
+		pass
+
+	return wrap
+
 
 class Hero:
 
@@ -25,29 +32,38 @@ class Hero:
 	custle_button = (2, 0)
 
 	# quests button
-	forest = (0, 0)
-	corovan = (0, 1)
-	swamp = (1, 0)
-	valley = (1, 1)
-	arena = (2, 0)
+	forest_button = (0, 0)
+	corovan_button = (0, 1)
+	swamp_button = (1, 0)
+	valley_button = (1, 1)
+	arena_button = (2, 0)
 
 	# TODO: add arena buttons if need it 
 
-	def __init__(self, quests):
+	def __init__(self, quests, forest, valley, swamp):
 		print('Hero created')
 		self.quests = quests
-		
+		self.forest = forest
+		self.valley = valley
+		self.swamp = swamp
 		
 		self.endurance = 0
 		self.endurance_max = 0
 		self.state = ''
 	
 	async def action(self, command, event):
-		print(command)
+		print('Sending ', event.message.reply_markup.rows[command[0]].buttons[command[1]].text)
 		await client.send_message(game_id, event.message.reply_markup.rows[command[0]].buttons[command[1]].text)
+	
 		
 
-@client.on(events.NewMessage(from_users = game_id, pattern = r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
+
+MyHero = Hero(True, True, False, False)
+
+
+# incoming argument could be only true or false. I will use it as a switch 
+@client.on(events.NewMessage(from_users = game_id, 
+							 pattern = r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟') 
 async def get_message_hero(event):
 	print('Received message from bot')
 	MyHero.endurance = int(re.search(r'Выносливость: (\d+)', event.raw_text).group(1))
@@ -59,13 +75,15 @@ async def get_message_hero(event):
 		sleep(1)
 		await MyHero.action(MyHero.quest_button, event)
 		
-
-@client.on(events.NewMessage(from_users = game_id, pattern = r'🌲Лес 5мин.'))
-async def go_forest(event):
+		
+#if bot ready to go to the quest. This func chooses one 
+@client.on(events.NewMessage(from_users = game_id, 
+							 pattern = r'🌲Лес 5мин.'))
+async def go_quest(event):
 	sleep(random.randint(1, 3))
-	await MyHero.action(MyHero.forest, event)
+	await MyHero.action(MyHero.forest_button, event)
 	
 
 if __name__ == '__main__':
-	MyHero = Hero(True)
+	client.start()
 	client.run_until_disconnected()
