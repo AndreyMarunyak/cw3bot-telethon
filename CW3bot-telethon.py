@@ -1,9 +1,12 @@
 import random
 import re
+import asyncio
 
 from time import time, sleep
+
 from telethon import TelegramClient, events
-from telethon.tl.functions.messages import GetBotCallbackAnswerRequest
+
+
 
 api_hash = 'bb85650739037a67603d57146707722a'
 
@@ -96,6 +99,17 @@ async def go_quest(event):
     await MyHero.action(MyHero.quests_button_list[random.choice(MyHero.quest_declaration())], event)
 
 
+async def worker():
+
+    while True:
+        await client.send_message(game_id, '🏅Герой')
+
+        await asyncio.sleep(10)
+
+
 if __name__ == '__main__':
     client.start()
+    ioloop = asyncio.get_event_loop()
+    ioloop.run_until_complete(worker())
+    ioloop.close()
     client.run_until_disconnected()
