@@ -93,11 +93,13 @@ async def get_message_hero(event):
     MyHero.state = re.search(r'Состояние:\n(.*)', event.raw_text).group(1)
     print('endurance: {0} / {1}, State: {2}'.format(MyHero.endurance, MyHero.endurance_max, MyHero.state))
 
+    MyHero.current_time = datetime.now() # refresh current time
+
     if MyHero.endurance > 0 and MyHero.quests:
         await go_quest()
-
-    if MyHero.endurance >= 2 and MyHero.corovan:
-        pass
+        # attack corovan between certain time
+    if MyHero.endurance >= 2 and MyHero.corovan and 3 <= MyHero.current_time.hour <= 6:
+        await attack_corovan()
 
 
 # if bot ready to go to the quest. This func chooses one
