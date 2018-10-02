@@ -79,7 +79,7 @@ class Hero:
         return declared_quests
 
 
-MyHero = Hero(True, False, True, True, True, False)
+MyHero = Hero(True, False, True, True, True)
 
 
 @client.on(events.NewMessage(from_users=game_id, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
