@@ -109,7 +109,7 @@ async def go_quest(event):
     sleep(random.randint(1, 3))
     #  attack 'corovans' between 2:00 and 6:59 AM
     if 2 <= MyHero.current_time.hour <= 6 and MyHero.corovan and MyHero.endurance >= 2:
-        await MyHero.action(MyHero.MyHero.quests_button_list['corovan_button'], event)
+        await MyHero.action(MyHero.quests_button_list['corovan_button'], event)
 
     elif MyHero.endurance > 0 and MyHero.quests:
         # choose random enabled quest
