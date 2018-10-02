@@ -25,18 +25,18 @@ def print_what_you_send(func):
 
 class Hero:
     # button's coordinates in bot`s menu
-    attack_button = (0, 0)
-    def_button = (0, 1)
-    quest_button = (0, 2)
-    hero_button = (1, 0)
-    custle_button = (2, 0)
+    attack_button = '⚔️Атака'
+    def_button = '🛡Защита'
+    quest_button = '🗺Квесты'
+    hero_button = '🏅Герой'
+    custle_button = '🏰Замок'
 
     quests_button_list = {
-        'forest_button': (0, 0),
-        'corovan_button': (0, 1),
-        'swamp_button': (1, 0),
-        'valley_button': (1, 1),
-        'arena_button': (2, 0)
+        'forest_button': '🌲Лес',
+        'corovan_button': '🗡ГРАБИТЬ КОРОВАНЫ',
+        'swamp_button': '🍄Болото',
+        'valley_button': '⛰️Долина',
+        'arena_button': ''
     }
 
     current_time = datetime.now()
@@ -51,19 +51,21 @@ class Hero:
         self.swamp = swamp
         self.corovan = corovan
 
+        self.quest_list = self.quest_declaration()
+
         self.endurance = 0
         self.endurance_max = 0
         self.state = ''
 
-        self.delay = 360
+        self.delay = 300
 
         if not any([self.forest, self.valley, self.swamp]):
             print('There is no quests enabled. Quests switch is turned off now as well')
             self.quests = False
 
-    async def action(self, command, event):
-        print('Sending: ', event.message.reply_markup.rows[command[0]].buttons[command[1]].text)
-        await client.send_message(game_id, event.message.reply_markup.rows[command[0]].buttons[command[1]].text)
+    async def action(self, command):
+        print('Sending: ', command)
+        await client.send_message(game_id, command)
 
     def quest_declaration(self):
 
@@ -79,7 +81,7 @@ class Hero:
         return declared_quests
 
 
-MyHero = Hero(True, False, True, True, True)
+MyHero = Hero(False, False, True, True, True)
 
 
 @client.on(events.NewMessage(from_users=game_id, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
@@ -91,29 +93,24 @@ async def get_message_hero(event):
     MyHero.state = re.search(r'Состояние:\n(.*)', event.raw_text).group(1)
     print('endurance: {0} / {1}, State: {2}'.format(MyHero.endurance, MyHero.endurance_max, MyHero.state))
 
-    # if we have some endurance go to the quests area
-    if (MyHero.endurance > 0 and MyHero.quests) or (3 <= MyHero.current_time.hour <= 6
-                                                    and MyHero.corovan
-                                                    and MyHero.endurance >= 2):
+    if MyHero.endurance > 0 and MyHero.quests:
+        await go_quest()
 
-        sleep(1)
-        await MyHero.action(MyHero.quest_button, event)
-
-    if MyHero.endurance > 1 and MyHero.corovan:
+    if MyHero.endurance >= 2 and MyHero.corovan:
         pass
 
 
 # if bot ready to go to the quest. This func chooses one
-@client.on(events.NewMessage(from_users=game_id, pattern=r'🌲Лес 5мин.'))
-async def go_quest(event):
-    sleep(random.randint(1, 3))
-    #  attack 'corovans' between 2:00 and 6:59 AM
-    if 2 <= MyHero.current_time.hour <= 6 and MyHero.corovan and MyHero.endurance >= 2:
-        await MyHero.action(MyHero.quests_button_list['corovan_button'], event)
+async def go_quest():
+    await client.send_message(game_id, MyHero.quest_button)
+    await asyncio.sleep(random.randint(1, 3))
+    await client.send_message(game_id, random.choice(MyHero.quest_list))
 
-    elif MyHero.endurance > 0 and MyHero.quests:
-        # choose random enabled quest
-        await MyHero.action(MyHero.quests_button_list[random.choice(MyHero.quest_declaration())], event)
+
+async def attack_corovan():
+    await client.send_message(game_id, MyHero.quest_button)
+    await asyncio.sleep(random.randint(1, 3))
+    await client.send_message(game_id, MyHero.quests_button_list['corovan_button'])
 
 
 async def worker():
@@ -122,7 +119,7 @@ async def worker():
         MyHero.current_time = datetime.now()
         await client.send_message(game_id, '🏅Герой')
 
-        await asyncio.sleep(10)
+        await asyncio.sleep(MyHero.delay)
 
 
 if __name__ == '__main__':
