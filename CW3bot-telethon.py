@@ -6,7 +6,6 @@ from time import time, sleep
 from datetime import datetime
 from telethon import TelegramClient, events
 
-
 api_hash = 'bb85650739037a67603d57146707722a'
 
 api_id = 409382
@@ -56,6 +55,7 @@ class Hero:
         self.endurance = 0
         self.endurance_max = 0
         self.state = ''
+        self.time_to_battle = 0
 
         self.delay = 300
 
@@ -81,23 +81,25 @@ class Hero:
         return declared_quests
 
 
-MyHero = Hero(False, False, True, True, True)
+MyHero = Hero(quests=True, forest=True, valley=True, swamp=True, corovan=True)
 
 
 @client.on(events.NewMessage(from_users=game_id, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
 async def get_message_hero(event):
-
     print('Received main message from bot')
     MyHero.endurance = int(re.search(r'Выносливость: (\d+)', event.raw_text).group(1))
     MyHero.endurance_max = int(re.search(r'Выносливость: (\d+)/(\d+)', event.raw_text).group(2))
     MyHero.state = re.search(r'Состояние:\n(.*)', event.raw_text).group(1)
+    #MyHero.time_to_battle = re.search()
     print('endurance: {0} / {1}, State: {2}'.format(MyHero.endurance, MyHero.endurance_max, MyHero.state))
+
+    MyHero.current_time = datetime.now()  # refresh current time
 
     if MyHero.endurance > 0 and MyHero.quests:
         await go_quest()
-
-    if MyHero.endurance >= 2 and MyHero.corovan:
-        pass
+        # attack corovan between certain time
+    if MyHero.endurance >= 2 and MyHero.corovan and 3 <= MyHero.current_time.hour <= 6:
+        await attack_corovan()
 
 
 # if bot ready to go to the quest. This func chooses one
@@ -113,11 +115,21 @@ async def attack_corovan():
     await client.send_message(game_id, MyHero.quests_button_list['corovan_button'])
 
 
-async def worker():
+@client.on(events.NewMessage(from_users=game_id, pattern=r'Ты заметил'))
+async def deff_corovan(event):
+    await client.send_message(game_id, '/go')
+    print(event.raw_text)
 
+
+async def worker():
     while True:
         MyHero.current_time = datetime.now()
         await client.send_message(game_id, '🏅Герой')
+
+        if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
+            MyHero.delay = random.randint(600, 800)  # increase delay at night
+        else:
+            MyHero.delay = random.randint(300, 500)
 
         await asyncio.sleep(MyHero.delay)
 
