@@ -81,7 +81,7 @@ class Hero:
         return declared_quests
 
 
-MyHero = Hero(quests=True, forest=True, valley=True, swamp=True, corovan=True)
+MyHero = Hero(quests=False, forest=True, valley=True, swamp=True, corovan=True)
 
 
 @client.on(events.NewMessage(from_users=game_id, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
@@ -90,7 +90,16 @@ async def get_message_hero(event):
     MyHero.endurance = int(re.search(r'Выносливость: (\d+)', event.raw_text).group(1))
     MyHero.endurance_max = int(re.search(r'Выносливость: (\d+)/(\d+)', event.raw_text).group(2))
     MyHero.state = re.search(r'Состояние:\n(.*)', event.raw_text).group(1)
-    #MyHero.time_to_battle = re.search()
+
+    if re.search(r'Битва семи замков через ?((\d+)ч\.)?( (\d+) ?(мин\.|минуты|минуту))?!', event.raw_text):
+        hours = re.search(r'Битва семи замков через ?((\d+)ч\.)?( (\d+) ?(мин\.|минуты|минуту))?!'
+                          , event.raw_text).group(2)
+        minutes = re.search(r'Битва семи замков через ?((\d+)ч\.)?( (\d+) ?(мин\.|минуты|минуту))?!'
+                            , event.raw_text).group(4)
+        print('Hours: {0}, minutes {1}'.format(hours if hours else 0, minutes if minutes else 0))
+
+
+
     print('endurance: {0} / {1}, State: {2}'.format(MyHero.endurance, MyHero.endurance_max, MyHero.state))
 
     MyHero.current_time = datetime.now()  # refresh current time
@@ -116,7 +125,7 @@ async def attack_corovan():
 
 
 @client.on(events.NewMessage(from_users=game_id, pattern=r'Ты заметил'))
-async def deff_corovan(event):
+async def defend_corovan(event):
     await client.send_message(game_id, '/go')
     print(event.raw_text)
 
