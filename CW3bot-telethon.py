@@ -86,7 +86,7 @@ class Hero:
         return declared_quests
 
 
-MyHero = Hero(bot_enable=True, quests=False, forest=True, valley=True, swamp=True, corovan=True)
+MyHero = Hero(bot_enable=True, quests=True, forest=True, valley=True, swamp=True, corovan=True)
 
 
 @client.on(events.NewMessage(from_users=game_id, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
@@ -108,7 +108,6 @@ async def get_message_hero(event):
         logging.info('Time to battle: {0} : {1}. In seconds (approximately): {2}'.format(
             hours if hours else 0, minutes if minutes else 0, MyHero.time_to_battle))
 
-
     logging.info('endurance: {0} / {1}, State: {2}'.format(MyHero.endurance, MyHero.endurance_max, MyHero.state))
 
     MyHero.current_time = datetime.now()  # refresh current time
@@ -123,12 +122,17 @@ async def get_message_hero(event):
     if MyHero.endurance >= 2 and MyHero.corovan and 3 <= MyHero.current_time.hour <= 6:
         await attack_corovan()
 
+    if MyHero.time_to_battle > 3600 and MyHero.endurance == 0:
+        logging.info('Time to battle > 1 hour and Endurance = 0. Delay = 30 min')
+        MyHero.delay = 1800
+
 
 # if bot ready to go to the quest. This func chooses one
 async def go_quest():
     await client.send_message(game_id, MyHero.quest_button)
     await asyncio.sleep(random.randint(1, 3))
-    await client.send_message(game_id, random.choice(MyHero.quest_list))
+    # choose random quest from quest list and 'press' quest button
+    await client.send_message(game_id, MyHero.quests_button_list[random.choice(MyHero.quest_list)])
 
 
 async def attack_corovan():
