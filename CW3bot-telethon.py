@@ -1,8 +1,10 @@
 import random
 import re
 import asyncio
+import logging
+import sys
 
-from time import time, sleep
+
 from datetime import datetime
 from telethon import TelegramClient, events
 
@@ -13,6 +15,8 @@ api_id = 409382
 game_id = 265204902
 
 client = TelegramClient('CW3bot', api_id, api_hash)
+
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
 
 def print_what_you_send(func):
@@ -42,15 +46,16 @@ class Hero:
 
     # TODO: add arena buttons if need it
 
-    def __init__(self, quests, forest, valley, swamp, corovan):
-        print(self.current_time, 'Hero created')
+    def __init__(self, bot_enable, quests, forest, valley, swamp, corovan):
+        logging.info('Hero created')
+        self.bot_enable = bot_enable
         self.quests = quests
         self.forest = forest
         self.valley = valley
         self.swamp = swamp
         self.corovan = corovan
 
-        self.quest_list = self.quest_declaration()
+        self.quest_list = self.__quest_declaration()
 
         self.endurance = 0
         self.endurance_max = 0
@@ -64,10 +69,10 @@ class Hero:
             self.quests = False
 
     async def action(self, command):
-        print('Sending: ', command)
+        logging.info('Sending: {}'.format(command))
         await client.send_message(game_id, command)
 
-    def quest_declaration(self):
+    def __quest_declaration(self):  # creates list with enabled quests during initialization
 
         declared_quests = []
 
@@ -81,31 +86,39 @@ class Hero:
         return declared_quests
 
 
-MyHero = Hero(quests=False, forest=True, valley=True, swamp=True, corovan=True)
+MyHero = Hero(bot_enable=True, quests=False, forest=True, valley=True, swamp=True, corovan=True)
 
 
 @client.on(events.NewMessage(from_users=game_id, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
 async def get_message_hero(event):
-    print('Received main message from bot')
+    logging.info('Received main message from bot')
     MyHero.endurance = int(re.search(r'Выносливость: (\d+)', event.raw_text).group(1))
     MyHero.endurance_max = int(re.search(r'Выносливость: (\d+)/(\d+)', event.raw_text).group(2))
     MyHero.state = re.search(r'Состояние:\n(.*)', event.raw_text).group(1)
 
     if re.search(r'Битва семи замков через ?((\d+)ч\.)?( (\d+) ?(мин\.|минуты|минуту))?!', event.raw_text):
-        hours = re.search(r'Битва семи замков через ?((\d+)ч\.)?( (\d+) ?(мин\.|минуты|минуту))?!'
-                          , event.raw_text).group(2)
-        minutes = re.search(r'Битва семи замков через ?((\d+)ч\.)?( (\d+) ?(мин\.|минуты|минуту))?!'
-                            , event.raw_text).group(4)
-        print('Hours: {0}, minutes {1}'.format(hours if hours else 0, minutes if minutes else 0))
+
+        hours = int(re.search(r'Битва семи замков через ?((\d+)ч\.)?( (\d+) ?(мин\.|минуты|минуту))?!',
+                              event.raw_text).group(2))
+        minutes = int(re.search(r'Битва семи замков через ?((\d+)ч\.)?( (\d+) ?(мин\.|минуты|минуту))?!',
+                                event.raw_text).group(4))
+
+        MyHero.time_to_battle = (hours if hours else 0) * 3600 + (minutes if minutes else 0) * 60  # convert to seconds
+
+        logging.info('Time to battle: {0} : {1}. In seconds (approximately): {2}'.format(
+            hours if hours else 0, minutes if minutes else 0, MyHero.time_to_battle))
 
 
-
-    print('endurance: {0} / {1}, State: {2}'.format(MyHero.endurance, MyHero.endurance_max, MyHero.state))
+    logging.info('endurance: {0} / {1}, State: {2}'.format(MyHero.endurance, MyHero.endurance_max, MyHero.state))
 
     MyHero.current_time = datetime.now()  # refresh current time
 
     if MyHero.endurance > 0 and MyHero.quests:
-        await go_quest()
+        if MyHero.state == '🛌Отдых':
+            await go_quest()
+        else:
+            logging.info('So busy for quests')
+
         # attack corovan between certain time
     if MyHero.endurance >= 2 and MyHero.corovan and 3 <= MyHero.current_time.hour <= 6:
         await attack_corovan()
@@ -127,25 +140,35 @@ async def attack_corovan():
 @client.on(events.NewMessage(from_users=game_id, pattern=r'Ты заметил'))
 async def defend_corovan(event):
     await client.send_message(game_id, '/go')
-    print(event.raw_text)
+    logging.info('Your pledges are safe')
 
 
 async def worker():
     while True:
-        MyHero.current_time = datetime.now()
-        await client.send_message(game_id, '🏅Герой')
 
-        if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
-            MyHero.delay = random.randint(600, 800)  # increase delay at night
-        else:
-            MyHero.delay = random.randint(300, 500)
+        if MyHero.bot_enable:
 
-        await asyncio.sleep(MyHero.delay)
+            MyHero.current_time = datetime.now()
+            await MyHero.action('🏅Герой')
+
+            if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
+                MyHero.delay = random.randint(600, 800)  # increase delay at night
+            else:
+                MyHero.delay = random.randint(300, 500)
+
+            await asyncio.sleep(MyHero.delay)
 
 
 if __name__ == '__main__':
     client.start()
-    ioloop = asyncio.get_event_loop()
-    ioloop.run_until_complete(worker())
-    ioloop.close()
-    client.run_until_disconnected()
+
+    try:
+        ioloop = asyncio.get_event_loop()
+        ioloop.run_until_complete(worker())
+        client.run_until_disconnected()
+    except KeyboardInterrupt:
+        ioloop.close()
+        logging.info('Keyboard interrupt')
+        sys.exit(0)
+
+
