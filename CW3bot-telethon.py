@@ -206,6 +206,12 @@ async def get_admin_message(event):
         ]))
 
 
+@client.on(events.NewMessage(from_users=game_id, pattern='After a successful act of'))
+async def pledge(event):
+    logging.info('We got pledge!')
+    await MyHero.action('/pledge')
+
+
 async def quest_switch_on(quest_name):
 
     if quest_name not in MyHero.quest_list:
