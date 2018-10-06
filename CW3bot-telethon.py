@@ -18,6 +18,8 @@ admin_id = 306869781
 
 order_id = 614493767  # id of user/bot gives orders for battle
 
+helper_id = 615010125  # helper bot's id
+
 client = TelegramClient('CW3bot', api_id, api_hash)
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
@@ -248,6 +250,17 @@ async def get_order(event):
     await MyHero.action(order)
 
 
+@client.on(events.NewMessage(from_users=helper_id, pattern=r'Изменения в вашем стоке:'))
+async def get_report_from_battle(event):
+    await MyHero.action('/report')
+
+
+@client.on(events.NewMessage(from_users=game_id, pattern='.+\nТвои результаты в бою:'))
+async def send_report(event):
+
+    await client.forward_messages(helper_id, event.message)
+
+
 async def worker():
     while True:
 
@@ -266,13 +279,11 @@ async def worker():
 
 if __name__ == '__main__':
     client.start()
-
     try:
-        ioloop = asyncio.get_event_loop()
-        ioloop.run_until_complete(worker())
-        client.run_until_disconnected()
+        async_loop = asyncio.get_event_loop()
+        async_loop.run_until_complete(worker())
     except KeyboardInterrupt:
-        ioloop.close()
+        async_loop.close()
         logging.info('Keyboard interrupt')
         sys.exit(0)
 
