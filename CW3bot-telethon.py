@@ -124,6 +124,7 @@ async def get_message_hero(event):
     if MyHero.endurance >= 2 and MyHero.corovan and 3 <= MyHero.current_time.hour <= 6:
         await attack_corovan()
 
+    # TODO: fix this bad part
     if MyHero.time_to_battle > 3600 and MyHero.endurance == 0:
         logging.info('Time to battle > 1 hour and Endurance = 0. Delay = 30 min')
         MyHero.delay = 1800
@@ -163,13 +164,13 @@ async def get_admin_message(event):
         ]))
     elif event.raw_text == 'quest_off':
         MyHero.quests = False
-        await client.send_message(admin_id, 'Походы по квестам выключены')
+        await client.send_message(admin_id, 'Quests disabled')
     elif event.raw_text == 'corovan_off':
         MyHero.corovan = False
-        await client.send_message(admin_id, 'Ты оставил корованы в покое')
+        await client.send_message(admin_id, 'Corovans disabled')
     elif event.raw_text == 'bot_off':
         MyHero.bot_enable = False
-        await client.send_message(admin_id, 'Бот выключен')
+        await client.send_message(admin_id, 'Bot enabled')
     elif event.raw_text == 'valley_off':
         MyHero.valley = False
         await quest_switch_off('valley')
@@ -181,13 +182,13 @@ async def get_admin_message(event):
         await quest_switch_off('swamp')
     elif event.raw_text == 'quest_on':
         MyHero.quests = True
-        await client.send_message(admin_id, 'Походы по квестам включены')
+        await client.send_message(admin_id, 'Quests enabled')
     elif event.raw_text == 'corovan_on':
         MyHero.corovan = True
-        await client.send_message(admin_id, 'Корованы в беде. Ты отправишься за ними с 3 до 7 утра')
+        await client.send_message(admin_id, 'Corovans enabled')
     elif event.raw_text == 'bot_on':
         MyHero.bot_enable = True
-        await client.send_message(admin_id, 'Бот включен')
+        await client.send_message(admin_id, 'Bot enabled')
     elif event.raw_text == 'forest_on':
         MyHero.forest = True
         await quest_switch_on('forest')
