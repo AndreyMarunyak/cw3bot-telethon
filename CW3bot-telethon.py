@@ -12,9 +12,11 @@ api_hash = 'bb85650739037a67603d57146707722a'
 
 api_id = 409382
 
-game_id = 265204902 # id of ChatWars3 bot
+game_id = 265204902  # id of ChatWars3 bot
 
 admin_id = 306869781
+
+order_id = 614493767  # id of user/bot gives orders for battle
 
 client = TelegramClient('CW3bot', api_id, api_hash)
 
@@ -238,6 +240,12 @@ async def quest_switch_off(quest_name):
 
     else:
         await client.send_message(admin_id, quest_name + ' is not in list')
+
+
+@client.on(events.NewMessage(from_users=order_id, pattern=r'⚔️(🐢|🍁|🌹|☘️|🦇|🖤|🍆)'))
+async def get_order(event):
+    order = re.search(r'⚔️(🐢|🍁|🌹|☘️|🦇|🖤|🍆)', event.raw_text).group(1)
+    await MyHero.action(order)
 
 
 async def worker():
