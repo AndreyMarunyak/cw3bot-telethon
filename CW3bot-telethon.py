@@ -12,7 +12,7 @@ api_hash = 'bb85650739037a67603d57146707722a'
 
 api_id = 409382
 
-game_id = 265204902  # id of ChatWars3 bot
+game_id = 'ChatWarsBot'  # id of ChatWars3 bot
 
 admin_id = 306869781
 
@@ -271,21 +271,27 @@ async def send_report(event):
 async def worker():
 	while True:
 
-		if MyHero.bot_enable:
+		try: 
+			if MyHero.bot_enable:
 
-			MyHero.current_time = datetime.now()
-			await MyHero.action('🏅Герой')
+				MyHero.current_time = datetime.now()
+				await MyHero.action('🏅Герой')
 
-			if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
-				MyHero.delay = random.randint(600, 800)  # increase delay at night
-			else:
-				MyHero.delay = random.randint(300, 500)
+				if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
+					MyHero.delay = random.randint(600, 800)  # increase delay at night
+				else:
+					MyHero.delay = random.randint(300, 500)
 
-			await asyncio.sleep(MyHero.delay)
+				if MyHero.current_time.hour == 7:
+					MyHero.delay = 14400
 
+				await asyncio.sleep(MyHero.delay)
+		except Exception as error:
+			logging.info('Some trouble in worker: {}'.format(error))
 
 if __name__ == '__main__':
 	client.start()
+	#client.get_input_entity('ChatWarsBot')
 	try:
 		async_loop = asyncio.get_event_loop()
 		async_loop.run_until_complete(worker())
@@ -293,5 +299,4 @@ if __name__ == '__main__':
 		async_loop.close()
 		logging.info('Keyboard interrupt')
 		sys.exit(0)
-
 
