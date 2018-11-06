@@ -2,24 +2,27 @@ import random
 import re
 import logging
 import sys
+import threading
 
-from time import sleep
+from time import sleep, time
 from datetime import datetime
 from telethon import TelegramClient, events
 
-api_hash = 'bb85650739037a67603d57146707722a'
+API_HASH = 'bb85650739037a67603d57146707722a'
 
-api_id = 409382
+API_ID = 409382
 
-game_id = 'ChatWarsBot'  # id of ChatWars3 bot
+GAME_ID = 'ChatWarsBot'  # id of ChatWars3 bot
 
-admin_id = 306869781
+ADMIN_ID = 306869781
 
-order_id = 614493767  # id of user/bot gives orders for battle
+ORDER_ID = 614493767  # id of user/bot gives orders for battle
 
-helper_id = 615010125  # helper bot's id
+HELPER_ID = 615010125  # helper bot's id
 
-client = TelegramClient('CW3bot', api_id, api_hash)
+BREAK_POINT = False
+
+client = TelegramClient('CW3bot', API_ID, API_HASH)
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
@@ -69,7 +72,7 @@ class Hero:
 	@staticmethod
 	def action(command):
 		logging.info('Sending: {}'.format(command))
-		client.send_message(game_id, command)
+		client.send_message(GAME_ID, command)
 
 	def __quest_declaration(self):  # creates list with enabled quests during initialization
 
@@ -88,7 +91,7 @@ class Hero:
 MyHero = Hero(bot_enable=True, quests=False, forest=True, valley=True, swamp=True, corovan=True)
 
 
-@client.on(events.NewMessage(from_users=game_id, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
+@client.on(events.NewMessage(from_users=GAME_ID, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
 def get_message_hero(event):
 	logging.info('Received main message from bot')
 	MyHero.endurance = int(re.search(r'Выносливость: (\d+)', event.raw_text).group(1))
@@ -147,16 +150,16 @@ def attack_corovan():
 	MyHero.action(MyHero.quests_button_list['corovan'])
 
 
-@client.on(events.NewMessage(from_users=game_id, pattern=r'Ты заметил'))
+@client.on(events.NewMessage(from_users=GAME_ID, pattern=r'Ты заметил'))
 def defend_corovan(event):
 	MyHero.action('/go')
 	logging.info('Your pledges are safe')
 
 
-@client.on(events.NewMessage(from_users=admin_id))
+@client.on(events.NewMessage(from_users=ADMIN_ID))
 def get_admin_message(event):
 	if event.raw_text == 'help':
-		client.send_message(admin_id, '\n'.join([
+		client.send_message(ADMIN_ID, '\n'.join([
 			'quest_on/off',
 			'corovan_on/off',
 			'bot_on/off',
@@ -167,13 +170,13 @@ def get_admin_message(event):
 		]))
 	elif event.raw_text == 'quest_off':
 		MyHero.quests = False
-		client.send_message(admin_id, 'Quests disabled')
+		client.send_message(ADMIN_ID, 'Quests disabled')
 	elif event.raw_text == 'corovan_off':
 		MyHero.corovan = False
-		client.send_message(admin_id, 'Corovans disabled')
+		client.send_message(ADMIN_ID, 'Corovans disabled')
 	elif event.raw_text == 'bot_off':
 		MyHero.bot_enable = False
-		client.send_message(admin_id, 'Bot disabled')
+		client.send_message(ADMIN_ID, 'Bot disabled')
 	elif event.raw_text == 'valley_off':
 		MyHero.valley = False
 		quest_switch_off('valley')
@@ -185,13 +188,13 @@ def get_admin_message(event):
 		quest_switch_off('swamp')
 	elif event.raw_text == 'quest_on':
 		MyHero.quests = True
-		client.send_message(admin_id, 'Quests enabled')
+		client.send_message(ADMIN_ID, 'Quests enabled')
 	elif event.raw_text == 'corovan_on':
 		MyHero.corovan = True
-		client.send_message(admin_id, 'Corovans enabled')
+		client.send_message(ADMIN_ID, 'Corovans enabled')
 	elif event.raw_text == 'bot_on':
 		MyHero.bot_enable = True
-		client.send_message(admin_id, 'Bot enabled')
+		client.send_message(ADMIN_ID, 'Bot enabled')
 	elif event.raw_text == 'forest_on':
 		MyHero.forest = True
 		quest_switch_on('forest')
@@ -202,7 +205,7 @@ def get_admin_message(event):
 		MyHero.valley = True
 		quest_switch_on('valley')
 	elif event.raw_text == 'status':
-		client.send_message(admin_id, '\n'.join([
+		client.send_message(ADMIN_ID, '\n'.join([
 			str(MyHero.quest_list),
 			'quest = ' + str(MyHero.quests),
 			'corovan = ' + str(MyHero.corovan),
@@ -210,7 +213,7 @@ def get_admin_message(event):
 		]))
 
 
-@client.on(events.NewMessage(from_users=game_id, pattern='After a successful act of'))
+@client.on(events.NewMessage(from_users=GAME_ID, pattern='After a successful act of'))
 def pledge(event):
 	logging.info('We got pledge!')
 	MyHero.action('/pledge')
@@ -219,75 +222,82 @@ def pledge(event):
 def quest_switch_on(quest_name):
 	if quest_name not in MyHero.quest_list:
 		MyHero.quest_list.append(quest_name)
-		client.send_message(admin_id, quest_name + ' added to quests list')
+		client.send_message(ADMIN_ID, quest_name + ' added to quests list')
 		if not MyHero.quests:
-			client.send_message(admin_id, 'Quest switch is off. Turn in on')
+			client.send_message(ADMIN_ID, 'Quest switch is off. Turn in on')
 
 	else:
-		client.send_message(admin_id, quest_name + ' already in list')
+		client.send_message(ADMIN_ID, quest_name + ' already in list')
 
-	client.send_message(admin_id, 'Quest list: ' + str(MyHero.quest_list))
+	client.send_message(ADMIN_ID, 'Quest list: ' + str(MyHero.quest_list))
 
 
 def quest_switch_off(quest_name):
 	if quest_name in MyHero.quest_list:
 		MyHero.quest_list.remove(quest_name)
-		client.send_message(admin_id, quest_name + ' deleted from quest list')
+		client.send_message(ADMIN_ID, quest_name + ' deleted from quest list')
 		if not MyHero.quest_list:
-			client.send_message(admin_id, 'list is empty')
+			client.send_message(ADMIN_ID, 'list is empty')
 			MyHero.quests = False
 
 	else:
-		client.send_message(admin_id, quest_name + ' is not in list')
+		client.send_message(ADMIN_ID, quest_name + ' is not in list')
 
 
-@client.on(events.NewMessage(from_users=order_id, pattern=r'⚔️(🐢|🍁|🌹|☘️|🦇|🖤|🍆)'))
+@client.on(events.NewMessage(from_users=ORDER_ID, pattern=r'⚔️(🐢|🍁|🌹|☘️|🦇|🖤|🍆)'))
 def get_order(event):
 	order = re.search(r'⚔️(🐢|🍁|🌹|☘️|🦇|🖤|🍆)', event.raw_text).group(1)
 	MyHero.action(order)
 
 
-@client.on(events.NewMessage(from_users=helper_id, pattern=r'Изменения в вашем стоке:'))
+@client.on(events.NewMessage(from_users=HELPER_ID, pattern=r'Изменения в вашем стоке:'))
 def get_report_from_battle(event):
 	MyHero.action('/report')
 
 
-@client.on(events.NewMessage(from_users=game_id, pattern='.+\nТвои результаты в бою:'))
+@client.on(events.NewMessage(from_users=GAME_ID, pattern='.+\nТвои результаты в бою:'))
 def send_report(event):
-	client.forward_messages(helper_id, event.message)
+	client.forward_messages(HELPER_ID, event.message)
 
 
 def worker():
+
+	temp_time = 0
+
 	while True:
 
 		try:
-			if MyHero.bot_enable:
 
-				MyHero.action('🏅Герой')
-				logging.info('Delay = {}'.format(MyHero.delay))
+			if time() - temp_time > MyHero.delay:
 
-				MyHero.current_time = datetime.now()
-				if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
-					MyHero.delay = random.randint(600, 800)  # increase delay at night
+				temp_time = time()
+
+				if MyHero.bot_enable:
+
+					MyHero.action('🏅Герой')
+
+
+					MyHero.current_time = datetime.now()
+					if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
+						MyHero.delay = random.randint(600, 800)  # increase delay at night
+					else:
+						MyHero.delay = random.randint(300, 500)
+					logging.info('Delay = {}'.format(MyHero.delay))
+					continue
 				else:
-					MyHero.delay = random.randint(300, 500)
+					logging.info('Bot is going to sleep')
 
-			else:
-				logging.info('Bot is going to sleep')
-				break
+
 		except Exception as error:
 			logging.info('Some trouble in worker: {}'.format(error))
 
 
-if __name__ == '__main__':
-	client.start()
-	try:
 
-		# async_loop = asyncio.get_event_loop()
-		# if MyHero.bot_enable:
-		#	async_loop.run_until_complete(worker())
-		client.run_until_disconnected()
-	except KeyboardInterrupt:
-		client.disconnect()
-		logging.info('Keyboard interrupt')
-		sys.exit(0)
+if __name__ == '__main__':
+
+	client.start()
+	main_thread = threading.Thread(target=worker)
+	main_thread.daemon = True
+	main_thread.start()
+	client.run_until_disconnected()
+
