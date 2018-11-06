@@ -88,7 +88,7 @@ class Hero:
 		return declared_quests
 
 
-MyHero = Hero(bot_enable=True, quests=False, forest=True, valley=True, swamp=True, corovan=True)
+MyHero = Hero(bot_enable=False, quests=False, forest=True, valley=True, swamp=True, corovan=True)
 
 
 @client.on(events.NewMessage(from_users=GAME_ID, pattern=r'Битва семи замков через|🌟Поздравляем! Новый уровень!🌟'))
@@ -268,24 +268,26 @@ def worker():
 
 		try:
 
-			if time() - temp_time > MyHero.delay:
+			if MyHero.bot_enable:	
 
-				temp_time = time()
+				if time() - temp_time > MyHero.delay:
 
-				if MyHero.bot_enable:
+					temp_time = time()
 
-					MyHero.action('🏅Герой')
+					if MyHero.bot_enable:
+
+						MyHero.action('🏅Герой')
 
 
-					MyHero.current_time = datetime.now()
-					if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
-						MyHero.delay = random.randint(600, 800)  # increase delay at night
+						MyHero.current_time = datetime.now()
+						if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
+							MyHero.delay = random.randint(600, 800)  # increase delay at night
+						else:
+							MyHero.delay = random.randint(300, 500)
+						logging.info('Delay = {}'.format(MyHero.delay))
+						continue
 					else:
-						MyHero.delay = random.randint(300, 500)
-					logging.info('Delay = {}'.format(MyHero.delay))
-					continue
-				else:
-					logging.info('Bot is going to sleep')
+						logging.info('Bot is going to sleep')
 
 
 		except Exception as error:
