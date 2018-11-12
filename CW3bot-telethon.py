@@ -71,6 +71,7 @@ class Hero:
 
 	@staticmethod
 	def action(command):
+		sleep(random.randint(2, 3))
 		logging.info('Sending: {}'.format(command))
 		client.send_message(GAME_ID, command)
 
@@ -131,9 +132,9 @@ def get_message_hero(event):
 		attack_corovan()
 
 
-#  if MyHero.time_to_battle > 3600 and MyHero.endurance == 0:
-#      logging.info('Time to battle > 1 hour and Endurance = 0. Delay = 30 min')
-#      MyHero.delay = 1800
+	if MyHero.time_to_battle > 3600 and MyHero.endurance == 0:
+		logging.info('Time to battle > 1 hour and Endurance = 0. Delay = 30 min')
+		MyHero.delay = 1800
 
 
 # if bot ready to go to the quest. This func chooses one
