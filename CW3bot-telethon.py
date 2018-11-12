@@ -165,7 +165,7 @@ def get_admin_message(event):
 			'bot_on/off',
 			'forest_on/off',
 			'swamp_on/off',
-			'valley_off',
+			'valley_on/off',
 			'status'
 		]))
 	elif event.raw_text == 'quest_off':
