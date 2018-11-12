@@ -3,18 +3,19 @@ import re
 import logging
 import sys
 import threading
+import config
 
 from time import sleep, time
 from datetime import datetime
 from telethon import TelegramClient, events
 
-API_HASH = ''
+API_HASH = config.API_HASH
 
-API_ID = 
+API_ID = config.API_ID
 
 GAME_ID = 'ChatWarsBot'  # id of ChatWars3 bot
 
-ADMIN_ID = 
+ADMIN_ID = config.ADMIN_ID
 
 ORDER_ID = 614493767  # id of user/bot gives orders for battle
 
