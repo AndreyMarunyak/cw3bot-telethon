@@ -8,13 +8,13 @@ from time import sleep, time
 from datetime import datetime
 from telethon import TelegramClient, events
 
-API_HASH = 'bb85650739037a67603d57146707722a'
+API_HASH = ''
 
-API_ID = 409382
+API_ID = 
 
 GAME_ID = 'ChatWarsBot'  # id of ChatWars3 bot
 
-ADMIN_ID = 306869781
+ADMIN_ID = 
 
 ORDER_ID = 614493767  # id of user/bot gives orders for battle
 
@@ -281,7 +281,7 @@ def worker():
 
 						MyHero.current_time = datetime.now()
 						if MyHero.current_time.hour >= 23 or MyHero.current_time.hour <= 6:
-							MyHero.delay = random.randint(600, 800)  # increase delay at night
+							MyHero.delay = random.randint(600, 800)  # increases delay at night
 						else:
 							MyHero.delay = random.randint(300, 500)
 						logging.info('Delay = {}'.format(MyHero.delay))
@@ -299,7 +299,7 @@ if __name__ == '__main__':
 
 	client.start()
 	main_thread = threading.Thread(target=worker)
-	main_thread.daemon = True
+	main_thread.daemon = True # allows to stop thread correctly 
 	main_thread.start()
 	client.run_until_disconnected()
 
